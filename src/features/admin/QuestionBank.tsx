@@ -513,6 +513,50 @@ export default function QuestionBank({ scope = "admin", educatorUid }: QuestionB
   const [csvInfo, setCsvInfo] = useState<{ total: number; done: number; errors: number } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
+async function processImageFile(file: File) {
+  setImgUploading(true);
+  setImgUrl("");
+
+  try {
+    const result = await uploadToImageKit(
+      file,
+      file.name || "pasted-image.png",
+      "/question-bank",
+      "question-bank"
+    );
+
+    setImgUrl(result.url);
+  } catch (err: any) {
+    toast({
+      title: "Upload failed",
+      description: err?.message || "Unknown error",
+      variant: "destructive",
+    });
+  } finally {
+    setImgUploading(false);
+  }
+}
+
+useEffect(() => {
+  const handlePaste = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          processImageFile(file);
+          setImgUploadOpen(true);
+        }
+      }
+    }
+  };
+
+  window.addEventListener("paste", handlePaste);
+  return () => window.removeEventListener("paste", handlePaste);
+}, []);
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
