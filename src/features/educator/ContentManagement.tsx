@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -20,7 +20,8 @@ import { Input } from "@shared/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@shared/ui/card";
 import { Badge } from "@shared/ui/badge";
 import { Label } from "@shared/ui/label";
-import { Loader2, Lock, Plus, Trash2, ExternalLink, BookOpen, FileText, Library } from "lucide-react";
+import { Loader2, Lock, Plus, Trash2, ExternalLink, BookOpen, FileText, Network, ScrollText, Library } from "lucide-react";
+import { useContentTypes } from "@shared/hooks/useContentTypes";
 import {
   Dialog,
   DialogContent,
@@ -71,11 +72,23 @@ async function triggerIngest(payload: {
   }
 }
 
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  book: BookOpen,
+  note: FileText,
+  mindmap: Network,
+  formulasheet: ScrollText,
+};
+
+function ContentTypeIcon({ slug }: { slug: string }) {
+  const Icon = TYPE_ICONS[slug] ?? FileText;
+  return <Icon className="mr-1 h-3 w-3" />;
+}
+
 type Branch = { id: string; name: string };
 type Course = { id: string; branchId: string; name: string };
 type ContentItem = {
   id: string;
-  type: "book" | "note";
+  type: string;
   title: string;
   description?: string;
   fileUrl: string;
@@ -90,7 +103,7 @@ type ContentItem = {
 };
 type AdminLibraryItem = {
   id: string;
-  type: "book" | "note";
+  type: string;
   title: string;
   description?: string;
   subjectId: string;
@@ -112,6 +125,7 @@ export default function ContentManagement() {
   const { profile } = useAuth();
   const educatorId = profile?.uid ?? "";
   const { features, loading: featuresLoading } = useEducatorFeatures(educatorId);
+  const { activeTypes } = useContentTypes();
 
   if (!featuresLoading && !features.contentLibrary) {
     return (
@@ -148,7 +162,7 @@ export default function ContentManagement() {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<"book" | "note">("book");
+  const [type, setType] = useState<string>("book");
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -433,9 +447,9 @@ export default function ContentManagement() {
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>
-                        <Badge variant={item.type === "book" ? "default" : "secondary"}>
-                          {item.type === "book" ? <BookOpen className="mr-1 h-3 w-3" /> : <FileText className="mr-1 h-3 w-3" />}
-                          {item.type}
+                        <Badge variant="secondary">
+                          <ContentTypeIcon slug={item.type} />
+                          {activeTypes.find((t) => t.slug === item.type)?.name ?? item.type}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -486,13 +500,14 @@ export default function ContentManagement() {
             </div>
             <div className="space-y-1">
               <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as "book" | "note")}>
+              <Select value={type} onValueChange={setType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="book">Book</SelectItem>
-                  <SelectItem value="note">Note</SelectItem>
+                  {activeTypes.map((t) => (
+                    <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -540,8 +555,9 @@ export default function ContentManagement() {
                     <TableCell className="font-medium">{item.title}</TableCell>
                     <TableCell>{item.subjectName}</TableCell>
                     <TableCell>
-                      <Badge variant={item.type === "book" ? "default" : "secondary"}>
-                        {item.type}
+                      <Badge variant="secondary">
+                        <ContentTypeIcon slug={item.type} />
+                        {activeTypes.find((t) => t.slug === item.type)?.name ?? item.type}
                       </Badge>
                     </TableCell>
                     <TableCell>

@@ -14,6 +14,7 @@ import AdminPlanManagement from "@features/admin/PlanManagement";
 import AdminQuestionBank from "@features/admin/QuestionBank";
 import AdminQuestions from "@features/admin/Questions";
 import AdminSeatManagement from "@features/admin/SeatManagement";
+import AdminContentTypeManagement from "@features/admin/ContentTypeManagement";
 import AdminSubjectManagement from "@features/admin/SubjectManagement";
 import AdminTemplates from "@features/admin/Templates";
 import AdminTestBank from "@features/admin/TestBank";
@@ -43,6 +44,7 @@ export function getAdminRoutes(adminIndexRoute: React.ReactElement) {
       <Route path="plans" element={<AdminPlanManagement />} />
       <Route path="subjects" element={<AdminSubjectManagement />} />
       <Route path="content" element={<AdminContentLibrary />} />
+      <Route path="content-types" element={<AdminContentTypeManagement />} />
       <Route path="dpp-template" element={<AdminDppTemplate />} />
       <Route path="coupons" element={<AdminCouponManagement />} />
       <Route path="payment-logs" element={<AdminPaymentLogs />} />

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -18,7 +18,8 @@ import { Input } from "@shared/ui/input";
 import { Card, CardContent } from "@shared/ui/card";
 import { Badge } from "@shared/ui/badge";
 import { Label } from "@shared/ui/label";
-import { Loader2, Plus, Trash2, ExternalLink, BookOpen, FileText, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, BookOpen, FileText, Brain, Network, ScrollText, RefreshCw } from "lucide-react";
+import { useContentTypes } from "@shared/hooks/useContentTypes";
 import {
   Dialog,
   DialogContent,
@@ -44,9 +45,21 @@ import { uploadToImageKit, getContentUploadLimit } from "@shared/lib/imagekitUpl
 
 type Course = { id: string; name: string };
 type Subject = { id: string; name: string; courseId?: string };
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  book: BookOpen,
+  note: FileText,
+  mindmap: Network,
+  formulasheet: ScrollText,
+};
+
+function ContentTypeIcon({ slug }: { slug: string }) {
+  const Icon = TYPE_ICONS[slug] ?? FileText;
+  return <Icon className="mr-1 h-3 w-3" />;
+}
+
 type ContentItem = {
   id: string;
-  type: "book" | "note";
+  type: string;
   title: string;
   description?: string;
   subjectId: string;
@@ -68,6 +81,7 @@ function formatBytes(bytes: number) {
 
 export default function ContentLibrary() {
   const { profile } = useAuth();
+  const { activeTypes } = useContentTypes();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -89,7 +103,7 @@ export default function ContentLibrary() {
   const [description, setDescription] = useState("");
   const [uploadCourseId, setUploadCourseId] = useState("");
   const [subjectId, setSubjectId] = useState("");
-  const [type, setType] = useState<"book" | "note">("book");
+  const [type, setType] = useState<string>("book");
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -230,7 +244,7 @@ export default function ContentLibrary() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleSync} disabled={syncing}>
             {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            Sync Pinecone
+            Sync Library
           </Button>
           <Button onClick={openUploadDialog}>
             <Plus className="mr-2 h-4 w-4" /> Upload Content
@@ -270,8 +284,9 @@ export default function ContentLibrary() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="book">Book</SelectItem>
-            <SelectItem value="note">Note</SelectItem>
+            {activeTypes.map((t) => (
+              <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -302,9 +317,9 @@ export default function ContentLibrary() {
                     <TableCell className="font-medium">{item.title}</TableCell>
                     <TableCell>{item.subjectName}</TableCell>
                     <TableCell>
-                      <Badge variant={item.type === "book" ? "default" : "secondary"}>
-                        {item.type === "book" ? <BookOpen className="mr-1 h-3 w-3" /> : <FileText className="mr-1 h-3 w-3" />}
-                        {item.type}
+                      <Badge variant="secondary">
+                        <ContentTypeIcon slug={item.type} />
+                        {activeTypes.find((t) => t.slug === item.type)?.name ?? item.type}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatBytes(item.fileSize)}</TableCell>
@@ -378,13 +393,14 @@ export default function ContentLibrary() {
 
             <div className="space-y-1">
               <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as "book" | "note")}>
+              <Select value={type} onValueChange={setType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="book">Book</SelectItem>
-                  <SelectItem value="note">Note</SelectItem>
+                  {activeTypes.map((t) => (
+                    <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

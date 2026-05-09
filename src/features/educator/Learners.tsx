@@ -285,11 +285,11 @@ export default function Learners() {
     setAssigning(true);
     try {
       const batch = writeBatch(db);
-      batch.update(doc(db, "educators", educatorId, "students", assignTarget.id), {
+      batch.set(doc(db, "educators", educatorId, "students", assignTarget.id), {
         branchId: assignBranch,
         courseId: assignCourse,
         batchId: assignBatch,
-      });
+      }, { merge: true });
       batch.update(doc(db, "users", assignTarget.id), {
         branchId: assignBranch,
         courseId: assignCourse,

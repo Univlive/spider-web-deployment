@@ -21,6 +21,9 @@ export type AppUserProfile = {
   photoURL?: string;
   fullName?: string;
   currentSessionId?: string;
+  branchId?: string;
+  courseId?: string;
+  batchId?: string;
 };
 
 type AuthContextValue = {
@@ -58,6 +61,9 @@ async function loadProfile(uid: string): Promise<AppUserProfile | null> {
     displayName: typeof data.displayName === "string" ? data.displayName : undefined,
     email: typeof data.email === "string" ? data.email : undefined,
     currentSessionId: typeof data.currentSessionId === "string" ? data.currentSessionId : undefined,
+    branchId: typeof data.branchId === "string" ? data.branchId : undefined,
+    courseId: typeof data.courseId === "string" ? data.courseId : undefined,
+    batchId: typeof data.batchId === "string" ? data.batchId : undefined,
   };
 
   if (role === "EDUCATOR") {

@@ -1,16 +1,29 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import { db } from "@shared/lib/firebase";
 import { useAuth } from "@app/providers/AuthProvider";
+import { useContentTypes } from "@shared/hooks/useContentTypes";
 import { Badge } from "@shared/ui/badge";
 import { Button } from "@shared/ui/button";
 import { Card, CardContent } from "@shared/ui/card";
 import { Input } from "@shared/ui/input";
-import { BookOpen, ExternalLink, FileText, Loader2, Search } from "lucide-react";
+import { BookOpen, ExternalLink, FileText, Loader2, Network, ScrollText, Search } from "lucide-react";
+
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  book: BookOpen,
+  note: FileText,
+  mindmap: Network,
+  formulasheet: ScrollText,
+};
+
+function ContentTypeIcon({ slug }: { slug: string }) {
+  const Icon = TYPE_ICONS[slug] ?? FileText;
+  return <Icon className="h-5 w-5" />;
+}
 
 type ContentItem = {
   id: string;
-  type: "book" | "note";
+  type: string;
   title: string;
   description?: string;
   fileUrl: string;
@@ -28,6 +41,7 @@ function formatBytes(bytes: number) {
 
 export default function StudentContent() {
   const { profile } = useAuth();
+  const { activeTypes } = useContentTypes();
 
   const educatorId: string = profile?.educatorId ?? "";
   const branchId: string = profile?.branchId ?? "";
@@ -36,7 +50,7 @@ export default function StudentContent() {
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "book" | "note">("all");
+  const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
     if (!educatorId || !branchId || !courseId) {
@@ -99,15 +113,18 @@ export default function StudentContent() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-1">
-          {(["all", "book", "note"] as const).map((t) => (
+        <div className="flex gap-1 flex-wrap">
+          <Button size="sm" variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>
+            All
+          </Button>
+          {activeTypes.map((t) => (
             <Button
-              key={t}
+              key={t.slug}
               size="sm"
-              variant={filterType === t ? "default" : "outline"}
-              onClick={() => setFilterType(t)}
+              variant={filterType === t.slug ? "default" : "outline"}
+              onClick={() => setFilterType(t.slug)}
             >
-              {t === "all" ? "All" : t === "book" ? "Books" : "Notes"}
+              {t.name}
             </Button>
           ))}
         </div>
@@ -122,7 +139,7 @@ export default function StudentContent() {
               <CardContent className="p-4 flex flex-col gap-3 flex-1">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 text-muted-foreground">
-                    {item.type === "book" ? <BookOpen className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                    <ContentTypeIcon slug={item.type} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium leading-tight truncate">{item.title}</p>
@@ -133,8 +150,8 @@ export default function StudentContent() {
                 </div>
                 <div className="flex items-center justify-between mt-auto">
                   <div className="flex gap-2 items-center">
-                    <Badge variant={item.type === "book" ? "default" : "secondary"} className="text-xs">
-                      {item.type}
+                    <Badge variant="secondary" className="text-xs">
+                      {activeTypes.find((t) => t.slug === item.type)?.name ?? item.type}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{formatBytes(item.fileSize)}</span>
                   </div>

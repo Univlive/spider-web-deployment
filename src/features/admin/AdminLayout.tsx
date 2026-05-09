@@ -21,6 +21,7 @@ import {
   BookMarked,
   Receipt,
   Library,
+  LayoutList,
 } from "lucide-react";
 import { Button } from "@shared/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@shared/ui/sheet";
@@ -40,6 +41,7 @@ const sidebarItems = [
   { icon: Layers, label: "Plans", path: "/admin/plans" },
   { icon: BookMarked, label: "Courses", path: "/admin/subjects" },
   { icon: BookOpen, label: "Content Library", path: "/admin/content" },
+  { icon: LayoutList, label: "Content Types", path: "/admin/content-types" },
   { icon: Tag, label: "Coupons", path: "/admin/coupons" },
   { icon: Receipt, label: "Payment Logs", path: "/admin/payment-logs" },
 ];
@@ -127,7 +129,7 @@ export default function AdminLayout() {
         {sidebarItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
-            (item.path !== "/admin" && location.pathname.startsWith(item.path));
+            (item.path !== "/admin" && location.pathname.startsWith(item.path + "/"));
 
           return (
             <Link
